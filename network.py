@@ -1,5 +1,3 @@
-
-from unittest import case
 from activation import MSE, Linear, Relu, Sigmoid
 from layer import Layer
 from config_reader import ModelParser
@@ -15,7 +13,7 @@ class NeuralNetwork:
         self.input_zise = input_zise
         self.hidden_layers = []
         self.output_layer = None
-        self.loss_function = MSE.apply
+        self.loss_function = MSE.apply # needs to be modular not hard coded
         self.derivate_loss_function = MSE.derivative
 
     
@@ -25,9 +23,15 @@ class NeuralNetwork:
 
 
     def add_hidden_layer(self, layer): # agrumenter for å lage layer
+        """
+        Function for adding a hidden layer
+        """
         self.hidden_layers.append(layer)
 
     def set_output_layer(self, layer): # argumenter for å lage output layer
+        """
+        Function for adding the output layer
+        """
         self.output_layer = layer
 
     def forward_pass(self, input):
@@ -45,75 +49,121 @@ class NeuralNetwork:
         return input
 
     def backward_pass(self, pred, target):
+        """
+        Function for one bacward pass of the network, can have multiple targets and cases
+
+        Args:
+            pred (2d-array): predictions from the forward pass
+            target (2d-array): target for the predictions
+
+        Returns:
+            two lists containing 3d-array of gradients for weights and bias, for each case and layer 
+        """
         gradients_w = []
         gradients_b = []
-        J_l_z = self.jacobian_loss_z(pred, target)
+        # computing the first jacobian with regard to loss function
+        J_l_z = self.jacobian_loss_z(pred, target).T[:,np.newaxis,:]
         for i in range(len(self.hidden_layers)-1,-1,-1):
-            ###from forward pass
-            J_z_sum = np.diag(self.hidden_layers[i].derivative_act(self.hidden_layers[i].sum).reshape(-1,))
-            J_z_y = np.einsum('ij,jk->ik', J_z_sum, self.hidden_layers[i].W_T) # dot product
-            J_z_w = np.einsum('i,j->ij', self.hidden_layers[i].input.ravel(), np.diag(J_z_sum).ravel())
-            J_z_wb = np.einsum('i,j->ij', [1], np.diag(J_z_sum).ravel())
-            ###
+            # every array here is a 3D-array
+            # getting J_z_sum that is a 3d array with diagonal matrix with sum for each array
+            J_z_sum = self.hidden_layers[i].derivative_act(self.hidden_layers[i].sum).T[:,:,np.newaxis]*np.eye(self.hidden_layers[i].sum.shape[0])
+            # taking the dot-product of J_z_sum and the transposed weights to get J_z_y
+            J_z_y = np.einsum('hij,hjk->hik', J_z_sum, self.hidden_layers[i].W_T[np.newaxis,:,:]) # dot product
+            # taking the outer-product of the input to the layer and the J_z_sum diagonal to get J_z_w
+            J_z_w = np.einsum('hki,hkj->hij', self.hidden_layers[i].input.T[:,np.newaxis,:], np.diagonal(J_z_sum, axis1=1, axis2=2)[:,np.newaxis,:])
+            # taking the outer-product of 1(the input for bias) and J_z_sum to get J_z_wb 
+            J_z_wb = np.einsum('i,hkj->hij', [1], np.diagonal(J_z_sum, axis1=1, axis2=2)[:,np.newaxis,:])
+            
+            # computing the gradient to the weights J_l_w
             J_l_w = J_l_z * J_z_w
+            # computing the gradient to the bias J_l_wb
             J_l_wb = J_l_z * J_z_wb
-            J_l_y = np.einsum('ij,jk->ik', J_l_z, J_z_y)
+            # propagating up a layer by computing J_l_y as dot product of J_l_z and J_z_y
+            J_l_y = np.einsum('hij,hjk->hik', J_l_z, J_z_y)
             J_l_z = J_l_y
+            # adding the gradients of the layer to the list
             gradients_w.append(J_l_w)
             gradients_b.append(J_l_wb)
+        # returns lists of the gradients for each layer and each case
         return gradients_w, gradients_b
 
 
     def jacobian_loss_z(self, z, t):
-        J_L_output = self.derivate_loss_function(z, t) # J_L_Z loss = z-t
-        return J_L_output
-
-    def jacobian_for_prev_layer(self, layer):
-        return layer.J_Z_Y
-
-    def jacobian_layer_weight(self):
-        pass
+        """
+        Function for calculating the loss gradient for the output layer
+        
+        Args:
+            z (2d-array): array of the predicted value
+            t (2d-array): array of the target value
+        """
+        J_l_output = self.derivate_loss_function(z, t)
+        return J_l_output
 
 
     def train(self, input, target, epochs):
-        for e in range(epochs):
-            batch_delta_w = []
-            batch_delta_b = []
-            for x, y in zip(input.T,target.T):
-                pred = self.forward_pass(x.reshape(-1,1))
-                deltas_w, deltas_b = self.backward_pass(pred, y.reshape(-1,1))
-                batch_delta_w.append(deltas_w)
-                batch_delta_b.append(deltas_b)
-            
-            summed_batch_delta_w = batch_delta_w[0]
-            for i in range(1, len(batch_delta_w)):
-                for j in range(len(batch_delta_w[i])):
-                    summed_batch_delta_w[j] += batch_delta_w[i][j]
-            
-            summed_batch_delta_b = batch_delta_b[0]
-            for i in range(1, len(batch_delta_b)):
-                for j in range(len(batch_delta_b[i])):
-                    summed_batch_delta_b[j] += batch_delta_b[i][j]
-            
-            for i in range(len(summed_batch_delta_w)):
-                summed_batch_delta_w[i] = summed_batch_delta_w[i] / len(batch_delta_w)
-                summed_batch_delta_b[i] = summed_batch_delta_b[i] / len(batch_delta_b)
+        """
+        Function for training the neural net
 
-    
-            self.update_weights(summed_batch_delta_w)
-            self.update_biases(summed_batch_delta_b)
+        Args:
+            input (2d-array): array of the arguments for the case/cases
+            target(2d-array): array of the target value for the case/cases
+            epochs (int): number of times traning throug the hole dataset
+            batch_size (int): size of the batch used to calculate gradients
+        """
+        for e in range(epochs):
+            # prediction for the case
+            pred = self.forward_pass(input)
+            # getting gradients for the weights and biases from each case and layer
+            deltas_w, deltas_b = self.backward_pass(pred, target)
+            
+            # getting the average gradient of weights for each layer
+            mean_batch_delta_w = []
+            for i in range(len(deltas_w)):
+                mean_batch_delta_w.append(deltas_w[i].mean(axis=0))
+
+            # getting the average gradient of biases for each bias
+            mean_batch_delta_b = []
+            for i in range(len(deltas_b)):
+                mean_batch_delta_b.append(deltas_b[i].mean(axis=0))
+
+            # updating the weight and biases
+            self.update_weights(mean_batch_delta_w)
+            self.update_biases(mean_batch_delta_b)
+            
 
     
     def predict(self, input):
+        """
+        Function for predicting case
+
+        Args:
+            input (2d-array): array of the arguments for the case/cases
+
+        Returns:
+            predicted values 
+        """
         pred = self.forward_pass(input)
         return pred
     
 
     def update_weights(self, deltas_w):
+        """
+        Function for updating layer weights
+        
+        Args:
+            deltas_w (list): list of gradients, the last layer first
+        """
         for i in range(len(deltas_w)):
             self.hidden_layers[-i-1].W_T += -0.75 * deltas_w[i].T
             
+            
     def update_biases(self, deltas_b):
+        """
+        Function for updating layer biases
+
+        Args:
+            deltas_b (list): list of gradients, the last layer first
+        """
         for i in range(len(deltas_b)):
             self.hidden_layers[-i-1].B += -0.75 * deltas_b[i].T
         
@@ -127,36 +177,6 @@ if __name__ == "__main__":
 
     nn.add_hidden_layer(Layer(2,2, (Sigmoid.apply, Sigmoid.derivative), 1, [-0.5,0.5], [-0.5,0.5]))
     nn.add_hidden_layer(Layer(1,2, (Sigmoid.apply, Sigmoid.derivative), 1, [-0.5,0.5], [-0.5,0.5]))
-    """
-    x = np.zeros((2,50))
-    y = np.zeros((1,50))
-    for i in range(50):
-        rnd = r.randint(0,3)
-        if rnd == 0:
-            x[0,i] = 0
-            x[1,i] = 0
-            y[0,i] = 0
-        if rnd == 1:
-            x[0,i] = 1
-            x[1,i] = 0
-            y[0,i] = 1
-        if rnd == 2:
-            x[0,i] = 0
-            x[1,i] = 1
-            y[0,i] = 1
-        if rnd == 3:
-            x[0,i] = 1
-            x[1,i] = 1
-            y[0,i] = 0
-    
-
-    nn.train(x, y, 10000)
-
-    print(nn.forward_pass(np.array([[1],[1]])))
-    print(nn.forward_pass(np.array([[1],[0]])))
-    print(nn.forward_pass(np.array([[0],[1]])))
-    print(nn.forward_pass(np.array([[0],[0]])))
-    """
 
     x = np.zeros((2,4))
     y = np.zeros((1,4))
@@ -178,11 +198,6 @@ if __name__ == "__main__":
     y[0,3] = 0
 
     nn.train(x,y, 10000)
-    print(nn.forward_pass(np.array([[1],[1]])))
-    print(nn.forward_pass(np.array([[1],[0]])))
-    print(nn.forward_pass(np.array([[0],[1]])))
-    print(nn.forward_pass(np.array([[0],[0]])))
 
     print(nn.forward_pass(x))
-    
     
