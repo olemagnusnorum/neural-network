@@ -1,5 +1,5 @@
-from activation import Linear, Relu, Sigmoid, Tanh
-from layer import Layer
+from activation import MSE, CrossEntropy, Linear, Relu, Sigmoid, Tanh
+from layer import Layer, SoftMaxLayer
 from config_reader import ModelParser
 from network import NeuralNetwork
 import numpy as np
@@ -14,7 +14,9 @@ class ConfigNetwork:
         self.functions = {"sigmoid": (Sigmoid.apply, Sigmoid.derivative), 
                         "relu": (Relu.apply, Relu.derivative), 
                         "tanh": (Tanh.apply, Tanh.derivative), 
-                        "linear": (Linear.apply, Linear.derivative)}
+                        "linear": (Linear.apply, Linear.derivative),
+                        "mse": (MSE.apply, MSE.derivative),
+                        "cross_entropy": (CrossEntropy.apply, CrossEntropy.derivative)}
 
     def _get_size(self, layer):
             return layer.get("size")
@@ -39,9 +41,22 @@ class ConfigNetwork:
         else:
             act = layer.get("act")
         return self.functions[act]
-        
-    def _dummy_act(self, x):
-        return x
+
+    def _get_loss_function(self, globals):
+        loss_function = globals.get("loss")
+        return self.functions[loss_function]
+    
+    def _set_verbose(self, globals):
+        if "verbose" in globals.keys():
+            self.neural_network.set_verbose(globals.get("verbose"))
+
+    
+    def _config_network(self):
+        global_values = self.modul_parser.get_globals()
+        self._set_verbose(global_values)
+        loss_function = self._get_loss_function(global_values)
+        self.neural_network.set_loss_function(loss_function)
+
 
     def _config_layers(self):
         global_values = self.modul_parser.get_globals()
@@ -56,11 +71,17 @@ class ConfigNetwork:
             act = self._get_act(global_values, i)
             self.neural_network.add_hidden_layer(Layer(num_neurons, num_previous_neurons, act, lrate, wr))
             num_previous_neurons = num_neurons
+        
+        output_layer = self.modul_parser.get_output_layer()
+        if len(output_layer) != 0:
+            if output_layer.get('type') == 'softmax':
+                self.neural_network.set_softmax_layer(SoftMaxLayer())
 
     def _config_data(self):
         pass
 
     def config_neural_network(self):
+        self._config_network()
         self._config_layers()
         return self.neural_network
 
@@ -68,6 +89,31 @@ class ConfigNetwork:
 if __name__ == "__main__":
     cn = ConfigNetwork()
     nn = cn.config_neural_network()
-    nn.forward_pass(np.ones(20))
+
+    x = np.zeros((2,4))
+    y = np.zeros((1,4))
+    
+    x[0,0] = 0
+    x[1,0] = 0
+    y[0,0] = 0 # sansynlighet for 1er
+
+    
+
+    x[0,1] = 1
+    x[1,1] = 0
+    y[0,1] = 1
+
+    x[0,2] = 0
+    x[1,2] = 1
+    y[0,2] = 1
+
+    x[0,3] = 1
+    x[1,3] = 1
+    y[0,3] = 0
+
+    nn.train(x,y, 20000)
+
+    print(nn.forward_pass(x))
+    
     
 

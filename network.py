@@ -1,5 +1,7 @@
-from activation import MSE, Linear, Relu, Sigmoid
-from layer import Layer
+import math
+from turtle import back
+from activation import MSE, CrossEntropy, Linear, Relu, Sigmoid, SoftMax
+from layer import Layer, SoftMaxLayer
 from config_reader import ModelParser
 import numpy as np
 import random as r
@@ -9,18 +11,29 @@ class NeuralNetwork:
     A class for the neural network containg the differen network layers
     """
 
-    def __init__(self, input_zise=None):
-        self.input_zise = input_zise
+    def __init__(self, loss_function=(MSE.apply, MSE.derivative), reg=None, verbose=False):
         self.hidden_layers = []
-        self.output_layer = None
-        self.loss_function = MSE.apply # needs to be modular not hard coded
-        self.derivate_loss_function = MSE.derivative
+        self.softmax_layer = None
+        self.loss_function = loss_function[0] # needs to be modular not hard coded
+        self.derivate_loss_function = loss_function[1] # make this modular
+        self.verbose = verbose
+        self.loss_graph = []
+        self.batch_graph = []
 
     
 
     def config_data(self):
         pass
 
+    def set_verbose(self, value):
+        self.verbose = value
+
+    def set_loss_function(self, function):
+        self.loss_function = function[0]
+        self.derivate_loss_function = function[1]
+
+    def set_softmax_layer(self, layer):
+        self.softmax_layer = layer
 
     def add_hidden_layer(self, layer): # agrumenter for å lage layer
         """
@@ -28,11 +41,13 @@ class NeuralNetwork:
         """
         self.hidden_layers.append(layer)
 
-    def set_output_layer(self, layer): # argumenter for å lage output layer
+
+    def set_softmax_layer(self, layer): # argumenter for å lage output layer
         """
         Function for adding the output layer
         """
-        self.output_layer = layer
+        self.softmax_layer = layer
+
 
     def forward_pass(self, input):
         """
@@ -46,7 +61,12 @@ class NeuralNetwork:
         """
         for i in range(len(self.hidden_layers)):
             input = self.hidden_layers[i].calculate_output(input)
+        
+        if self.softmax_layer != None:
+            input = self.softmax_layer.calculate_output(input)
+            
         return input
+
 
     def backward_pass(self, pred, target):
         """
@@ -63,6 +83,9 @@ class NeuralNetwork:
         gradients_b = []
         # computing the first jacobian with regard to loss function
         J_l_z = self.jacobian_loss_z(pred, target).T[:,np.newaxis,:]
+        if self.softmax_layer != None:
+            # moving from softmax layer to hidden layer
+            J_l_z = np.einsum('hij,hjk->hik', J_l_z, self.softmax_layer.derivative_act(self.softmax_layer.input))
         for i in range(len(self.hidden_layers)-1,-1,-1):
             # every array here is a 3D-array
             # getting J_z_sum that is a 3d array with diagonal matrix with sum for each array
@@ -99,8 +122,12 @@ class NeuralNetwork:
         J_l_output = self.derivate_loss_function(z, t)
         return J_l_output
 
+    def get_L2_regulaizer_sum(self):
+        for layer in self.hidden_layers:
+            pass
 
-    def train(self, input, target, epochs):
+
+    def train(self, input, target, epochs, batch=1):
         """
         Function for training the neural net
 
@@ -110,27 +137,54 @@ class NeuralNetwork:
             epochs (int): number of times traning throug the hole dataset
             batch_size (int): size of the batch used to calculate gradients
         """
+        # for graphing
+        step = 0
+        # number of batches
+        number = math.ceil(input.shape[1]/batch)
+        input_batch = np.array_split(input, number, axis=1)
+        target_batch = np.array_split(target, number, axis=1)
         for e in range(epochs):
-            # prediction for the case
-            pred = self.forward_pass(input)
-            # getting gradients for the weights and biases from each case and layer
-            deltas_w, deltas_b = self.backward_pass(pred, target)
-            
-            # getting the average gradient of weights for each layer
-            mean_batch_delta_w = []
-            for i in range(len(deltas_w)):
-                mean_batch_delta_w.append(deltas_w[i].mean(axis=0))
+            # going through all batches
+            for i in range(number):
+                step += 1
+                input = input_batch[i]
+                target = target_batch[i]
+                # prediction for the case
+                pred = self.forward_pass(input)
+                # getting gradients for the weights and biases from each case and layer
+                deltas_w, deltas_b = self.backward_pass(pred, target)
+                
+                # getting the average gradient of weights for each layer
+                mean_batch_delta_w = []
+                for i in range(len(deltas_w)):
+                    mean_batch_delta_w.append(deltas_w[i].mean(axis=0))
 
-            # getting the average gradient of biases for each bias
-            mean_batch_delta_b = []
-            for i in range(len(deltas_b)):
-                mean_batch_delta_b.append(deltas_b[i].mean(axis=0))
+                # getting the average gradient of biases for each bias
+                mean_batch_delta_b = []
+                for i in range(len(deltas_b)):
+                    mean_batch_delta_b.append(deltas_b[i].mean(axis=0))
 
-            # updating the weight and biases
-            self.update_weights(mean_batch_delta_w)
-            self.update_biases(mean_batch_delta_b)
-            
+                # updating the weight and biases
+                self.update_weights(mean_batch_delta_w)
+                self.update_biases(mean_batch_delta_b)
 
+                self.loss_graph.append(self.loss_function(pred, target).mean())
+                self.batch_graph.append(step)
+
+                # run forward pass on valid set and save the result
+
+
+                if self.verbose:
+                    print("Network inputs:")
+                    print(input)
+                    print("Network outputs:")
+                    print(pred)
+                    print("Network targets:")
+                    print(target)
+                    print("Network loss:")
+                    print(self.loss_function(pred, target))
+
+        # run forward pass on test set and save the result    
     
     def predict(self, input):
         """
@@ -154,8 +208,8 @@ class NeuralNetwork:
             deltas_w (list): list of gradients, the last layer first
         """
         for i in range(len(deltas_w)):
-            self.hidden_layers[-i-1].W_T += -0.75 * deltas_w[i].T
-            
+            self.hidden_layers[-i-1].W_T = self.hidden_layers[-i-1].W_T -self.hidden_layers[-i-1].lrate * deltas_w[i].T #+ (0.001 * self.hidden_layers[-i-1].W_T) # regulazation
+
             
     def update_biases(self, deltas_b):
         """
@@ -165,14 +219,14 @@ class NeuralNetwork:
             deltas_b (list): list of gradients, the last layer first
         """
         for i in range(len(deltas_b)):
-            self.hidden_layers[-i-1].B += -0.75 * deltas_b[i].T
+            self.hidden_layers[-i-1].B = self.hidden_layers[-i-1].B -self.hidden_layers[-i-1].lrate * deltas_b[i].T #+ (0.001 * self.hidden_layers[-i-1].B) # regualarization L2
         
 
 
 
 
 if __name__ == "__main__":
-
+    """
     nn = NeuralNetwork()
 
     nn.add_hidden_layer(Layer(2,2, (Sigmoid.apply, Sigmoid.derivative), 1, [-0.5,0.5], [-0.5,0.5]))
@@ -184,6 +238,8 @@ if __name__ == "__main__":
     x[0,0] = 0
     x[1,0] = 0
     y[0,0] = 0
+
+    
 
     x[0,1] = 1
     x[1,1] = 0
@@ -200,4 +256,43 @@ if __name__ == "__main__":
     nn.train(x,y, 10000)
 
     print(nn.forward_pass(x))
+
+    """
+    #testing softmax
+    nn = NeuralNetwork(loss_function=(CrossEntropy.apply, CrossEntropy.derivative))
+
+    nn.add_hidden_layer(Layer(2,2, (Sigmoid.apply, Sigmoid.derivative), 0.75, [-0.5,0.5], [-0.5,0.5]))
+    nn.add_hidden_layer(Layer(2,2, (Sigmoid.apply, Sigmoid.derivative), 0.75, [-0.5,0.5], [-0.5,0.5]))
+    nn.set_softmax_layer(SoftMaxLayer())
+
+
+
+    x = np.zeros((2,4))
+    y = np.zeros((2,4))
     
+    x[0,0] = 0
+    x[1,0] = 0
+    y[0,0] = 0 # sansynlighet for 1er
+    y[1,0] = 1 # sansynlighet for 0er
+
+    
+
+    x[0,1] = 1
+    x[1,1] = 0
+    y[0,1] = 1
+    y[1,1] = 0
+
+    x[0,2] = 0
+    x[1,2] = 1
+    y[0,2] = 1
+    y[1,2] = 0
+
+    x[0,3] = 1
+    x[1,3] = 1
+    y[0,3] = 0
+    y[1,3] = 1
+
+    nn.train(x,y, 20000)
+
+    print(nn.forward_pass(x))
+    # tror softmax funker men får bare 0.72 prosent sikkerhet ikke 0.9

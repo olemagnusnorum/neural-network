@@ -1,13 +1,13 @@
 [globals]
-gloabals = {'loss': 'cross_entropy', 'lrate': 0.1, 'wreg': 0.001, 'wrt': 'L2'}
+gloabals = {'loss': 'mse', 'lrate': 0.005, 'wreg': 0.001, 'wrt': 'L2'}
 
 
 
 [layers]
-input = {'size': 20}
-1 = {'size': 1, 'act': 'sigmoid', 'wr': [-0.1, 0.1], 'lrate': 0.01}
-2 = {'size': 1, 'act': 'linear', 'wr': [-1, 1], 'br': [0, 1]}
-output = {'type': 'softmax'}
+input = {'size': 100}
+1 = {'size': 100, 'act': 'sigmoid', 'wr': [-0.5, 0.5], 'br': [-0.5, 0.5]}
+3 = {'size': 4, 'act': 'sigmoid', 'wr': [-0.5, 0.5], 'br': [-0.5, 0.5]}
+
 
 [data]
-
+data = {'number': 300, 'size': 10, 'split': [0.7,0.2,0.1], 'noise': 0, 'object_height_range': [10,10], 'object_width_range': [10,10], 'centerd': 'true', 'flattend': 'true'}

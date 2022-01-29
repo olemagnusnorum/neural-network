@@ -23,6 +23,8 @@ class ModelParser:
         return input_dict
 
     def get_output_layer(self):
+        if self.parser.options("layers")[-1] != 'output':
+            return {}
         output_string = self.parser.get("layers", "output")
         output_json = output_string.replace("\'", "\"")
         output_dict = json.loads(output_json)
@@ -42,6 +44,12 @@ class ModelParser:
         
         return hidden_layers
 
+    def get_data_generator(self):
+        generator_string = self.parser.get("data", "data")
+        generator_json = generator_string.replace("\'", "\"")
+        generator_dict = json.loads(generator_json)
+        return generator_dict
+
   
 
 
@@ -54,4 +62,5 @@ if __name__ == "__main__":
     print(m.get_globals())
     print(m.get_input_layer())
     print(m.get_hidden_layers())
-    m.get_output_layer()
+    print(m.get_output_layer())
+    print(m.get_data_generator())
