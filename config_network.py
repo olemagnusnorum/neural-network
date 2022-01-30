@@ -48,7 +48,20 @@ class ConfigNetwork:
     
     def _set_verbose(self, globals):
         if "verbose" in globals.keys():
-            self.neural_network.set_verbose(globals.get("verbose"))
+            if globals.get("verbose") == "true":
+                self.neural_network.set_verbose(True)
+            else:
+                self.neural_network.set_verbose(False)
+
+    def _set_wreg(self, globals):
+        if "wreg" in globals.keys():
+            wreg = globals.get("wreg")
+            self.neural_network.set_wreg(wreg)
+    
+    def _set_wrt(self, globals):
+        if "wrt" in globals.keys():
+            wrt = globals.get("wrt")
+            self.neural_network.set_wrt(wrt)
 
     
     def _config_network(self):
@@ -56,6 +69,8 @@ class ConfigNetwork:
         self._set_verbose(global_values)
         loss_function = self._get_loss_function(global_values)
         self.neural_network.set_loss_function(loss_function)
+        self._set_wreg(global_values)
+        self._set_wrt(global_values)
 
 
     def _config_layers(self):

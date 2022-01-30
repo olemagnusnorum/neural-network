@@ -11,19 +11,33 @@ class NeuralNetwork:
     A class for the neural network containg the differen network layers
     """
 
-    def __init__(self, loss_function=(MSE.apply, MSE.derivative), reg=None, verbose=False):
+    def __init__(self, loss_function=(MSE.apply, MSE.derivative), wreg=0, wrt="", verbose=False):
         self.hidden_layers = []
         self.softmax_layer = None
         self.loss_function = loss_function[0] # needs to be modular not hard coded
         self.derivate_loss_function = loss_function[1] # make this modular
+        
         self.verbose = verbose
+
+        self.wreg = 0
+        self.wrt = ""
+        
         self.loss_graph = []
         self.batch_graph = []
+
+        self.valid_loss_graph = []
+        self.valid_batch_graph = []
 
     
 
     def config_data(self):
         pass
+
+    def set_wreg(self, value):
+        self.wreg = value
+
+    def set_wrt(self, value):
+        self.wrt = value
 
     def set_verbose(self, value):
         self.verbose = value
@@ -35,16 +49,16 @@ class NeuralNetwork:
     def set_softmax_layer(self, layer):
         self.softmax_layer = layer
 
-    def add_hidden_layer(self, layer): # agrumenter for å lage layer
+    def add_hidden_layer(self, layer): 
         """
         Function for adding a hidden layer
         """
         self.hidden_layers.append(layer)
 
 
-    def set_softmax_layer(self, layer): # argumenter for å lage output layer
+    def set_softmax_layer(self, layer):
         """
-        Function for adding the output layer
+        Function for adding the softmax layer
         """
         self.softmax_layer = layer
 
@@ -98,7 +112,12 @@ class NeuralNetwork:
             J_z_wb = np.einsum('i,hkj->hij', [1], np.diagonal(J_z_sum, axis1=1, axis2=2)[:,np.newaxis,:])
             
             # computing the gradient to the weights J_l_w
+            # where we add regularization J_z_w + c * self.hidden_layers[i].W_T.T
             J_l_w = J_l_z * J_z_w
+            if self.wrt == "L1":
+                J_l_w = J_l_w + self.wreg * np.sign(self.add_hidden_layer[i].W_T.T)
+            if self.wrt == "L2":
+                J_l_w = J_l_w + self.wreg * self.hidden_layers[i].W_T.T
             # computing the gradient to the bias J_l_wb
             J_l_wb = J_l_z * J_z_wb
             # propagating up a layer by computing J_l_y as dot product of J_l_z and J_z_y
@@ -127,7 +146,7 @@ class NeuralNetwork:
             pass
 
 
-    def train(self, input, target, epochs, batch=1):
+    def train(self, input, target, epochs, batch=1, valid_input=[], valid_target=[], test_input=[], test_target=[]):
         """
         Function for training the neural net
 
@@ -144,6 +163,8 @@ class NeuralNetwork:
         input_batch = np.array_split(input, number, axis=1)
         target_batch = np.array_split(target, number, axis=1)
         for e in range(epochs):
+            if e%10 == 0:
+                print(f"epoch: {e}")
             # going through all batches
             for i in range(number):
                 step += 1
@@ -171,9 +192,6 @@ class NeuralNetwork:
                 self.loss_graph.append(self.loss_function(pred, target).mean())
                 self.batch_graph.append(step)
 
-                # run forward pass on valid set and save the result
-
-
                 if self.verbose:
                     print("Network inputs:")
                     print(input)
@@ -182,9 +200,18 @@ class NeuralNetwork:
                     print("Network targets:")
                     print(target)
                     print("Network loss:")
-                    print(self.loss_function(pred, target))
+                    print(self.loss_function(pred, target).mean())
 
-        # run forward pass on test set and save the result    
+            # run forward pass on valid set and save the result
+            if len(valid_input) > 0:
+                valid_pred = self.forward_pass(valid_input)
+                self.valid_loss_graph.append(self.loss_function(valid_pred, valid_target).mean())
+                self.valid_batch_graph.append(step)
+        # run forward pass on test set and save the result  
+        if len(test_input) > 0:
+            test_pred = self.forward_pass(test_input)
+            print("Test set loss:")
+            print(self.loss_function(test_pred, test_target).mean())
     
     def predict(self, input):
         """

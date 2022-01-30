@@ -1,0 +1,30 @@
+Under the [globals] tag are variables that are for the network as a hole.
+here is the globals variable that is a dictionary containing the the variables.
+    'loss', 'lrate', 'wreg', 'wrt', 'verbose' and can contain 'wr' and 'br'.
+    'loss' is the loss function of the network and can be 'mse' of 'cross_entropy'.
+    'lrate' default learning rate and is a number.
+    'wr' is a list [,] of the default range for the weight initialization for the layer.
+    'br' is a list [,] of the default range for the bias initialization for the layer.
+    'wreg' is the constant for the weight regularization and is a number.
+    'wrt' is the weight regularization.
+    'verbose' is the boolean for printing state values, and can be 'false' or 'true'.
+
+Under the [layers] tag are for the differnt layers. each layer is a variable containing
+a dictionary with the value 'size' 'act', 'lrate', 'wr', 'br'.
+    'size' is the number of neurons in the layer.
+    'act' is the activation function of the layer and can be 'sigmoid', 'relu', 'linear' or 'tanh'.
+    'lrate' is learningrate for the layer.
+    'wr' is a list [,] of the range for the weight initialization for the layer.
+    'br' is a list [,] of the range for the bias initialization fir the layer.
+
+Under the [data] tag are the values for data generation 'data' and 'images'.
+'data' is a dictionary with the values 'number', 'size', 'split', 'noise', 
+'object_height_range', 'object_width_range', 'centerd', 'flattend'.
+    'number' is the size of the image.
+    'split' is a list of the differnt splits [train,valid,test].
+    'noise' is the precentage of noise in the image 0.xx.
+    'object_height_range' is a list of the height range [,].
+    'object_width_range' is a list of the width range [,].
+    'centerd' is a boolean for if the image is to be centerd and has the values 'true' or 'false'.
+    'flattend' is a boolean fo i the image is to be flattend and has the values 'true' or 'false'.
+'images' is a dictionary that contains the key 'verbose' that can have the values 'true' or 'false'.

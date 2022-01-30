@@ -6,7 +6,7 @@ class ModelParser:
 
     def __init__(self):
         self.parser = ConfigParser()
-        self.parser.read("model_config.txt")
+        self.parser.read("model_config2.ini")
 
     def get_globals(self):
         globals_values = self.parser.options("globals")
@@ -49,6 +49,14 @@ class ModelParser:
         generator_json = generator_string.replace("\'", "\"")
         generator_dict = json.loads(generator_json)
         return generator_dict
+
+    def get_image_verbose(self):
+        if "images" in self.parser.options("data"):
+            images_string = self.parser.get("data", "images")
+            images_json = images_string.replace("\'", "\"")
+            images_dict = json.loads(images_json)
+            return images_dict
+        return {}
 
   
 

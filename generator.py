@@ -207,7 +207,7 @@ class Generator:
 
 if __name__ == "__main__":
     g = Generator()
-    i_set = g.generate(number=100, size=10, split=(0.7, 0.2, 0.1), noise=0, object_height_range=(10,10), object_width_range=(10,10), flattend=False)
+    i_set = g.generate(number=100, size=20, split=(0.7, 0.2, 0.1), noise=0.05, object_height_range=(10,20), object_width_range=(10,20), flattend=False)
     print(i_set[0][0][0])
     traning_set = i_set[0][0]
     traning_labels = i_set[0][1]
