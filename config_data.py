@@ -68,17 +68,17 @@ class ConfigData:
                         train_img = x_train[:,i].reshape(size, size)
                         fig.add_subplot(10,10,i+1)
                         plt.axis('off')
-                        plt.imshow(train_img)
+                        plt.imshow(train_img, "gray")
                     for i in range(10):
                         valid_img = x_valid[:,i].reshape(size, size)
                         fig.add_subplot(10,10,10+i+1)
                         plt.axis('off')
-                        plt.imshow(valid_img)
+                        plt.imshow(valid_img, "summer")
                     for i in range(10):
                         test_img = x_test[:,i].reshape(size, size)
                         fig.add_subplot(10,10,20+i+1)
                         plt.axis('off')
-                        plt.imshow(test_img)
+                        plt.imshow(test_img, "spring")
                     plt.show()
 
 

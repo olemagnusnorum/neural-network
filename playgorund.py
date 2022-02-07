@@ -10,15 +10,18 @@ from config_network import ConfigNetwork
 from generator import Generator
 
 def show_images():
+    """
+    generates and shows all pictures in the training set
+    """
     g = Generator()
-    i_set = g.generate(number=100, size=40, split=(0.7, 0.2, 0.1), noise=0.05, object_height_range=(10,20), object_width_range=(10,20), centerd=False, flattend=False)
+    i_set = g.generate(number=100, size=40, split=(0.7, 0.2, 0.1), noise=0.01, object_height_range=(20,39), object_width_range=(20,39), centerd=False, flattend=False)
     traning_set = i_set[0][0]
     fig = plt.figure(figsize=(8, 8))
     for i in range(len(traning_set)):
         img = traning_set[i]
         fig.add_subplot(10,10,i+1)
         plt.axis('off')
-        plt.imshow(img)
+        plt.imshow(img, cmap='gray')
     plt.show()
 
 
@@ -40,7 +43,7 @@ def run_network():
     x_test = np.squeeze(data[2][0]).T
     y_test = data[2][1]
 
-    nn.train(x_train, y_train, 100, batch=20, valid_input=x_valid, valid_target=y_valid, test_input=x_test, test_target=y_test)
+    nn.train(input=x_train, target=y_train, epochs=100, batch=20, valid_input=x_valid, valid_target=y_valid, test_input=x_test, test_target=y_test)
 
     pred = nn.forward_pass(x_test)
     print(pred[:,0])
@@ -67,4 +70,7 @@ def run_network():
     plt.show()
 
 if __name__ == "__main__":
+    #show_images()
     run_network()
+
+    #double check the verbose flagg prints

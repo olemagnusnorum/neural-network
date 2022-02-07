@@ -1,5 +1,5 @@
 Under the [globals] tag are variables that are for the network as a hole.
-here is the globals variable that is a dictionary containing the the variables.
+Here is the globals variable that is a dictionary containing the the variables.
     'loss', 'lrate', 'wreg', 'wrt', 'verbose' and can contain 'wr' and 'br'.
     'loss' is the loss function of the network and can be 'mse' of 'cross_entropy'.
     'lrate' default learning rate and is a number.
@@ -16,6 +16,7 @@ a dictionary with the value 'size' 'act', 'lrate', 'wr', 'br'.
     'lrate' is learningrate for the layer.
     'wr' is a list [,] of the range for the weight initialization for the layer.
     'br' is a list [,] of the range for the bias initialization fir the layer.
+The special output variable can be added at the end, and is used to add a spcial output layer to the end of the network, (softmax).
 
 Under the [data] tag are the values for data generation 'data' and 'images'.
 'data' is a dictionary with the values 'number', 'size', 'split', 'noise', 
