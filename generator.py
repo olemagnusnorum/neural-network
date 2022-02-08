@@ -29,7 +29,7 @@ class Generator:
         # labels for the images (0 = cross, 1 = rectangle, 2 = circle, 3 = triangle)
         label_array = np.zeros((number))
         # checking if need to split
-        if split[0] and split[1] and split[2]:
+        if split[0] != None and split[1] != None and split[2] != None:
             num_train = round(split[0]*number)
             num_valid = round(split[1]*number)
             num_test = round(split[2]*number)
@@ -63,22 +63,38 @@ class Generator:
                 image_batch[i] = self._generate_triangle(canvas, height, width, start_x, start_y, noise)
                 label_array[i] = 3
             
-            # if representation is to be a vector
-            if flattend:
-                image_batch = image_batch.reshape(number, size*size,)
+        # if representation is to be a vector
+        if flattend:
+            image_batch = image_batch.reshape(number, size*size, 1)
         
         # if there is a specified split
-        if split[0] and split[1] and split[2]:
+        if split[0] != None and split[1] != None and split[2] != None:
             train_image_set = image_batch[0:num_train]
-            train_label_array = label_array[0:num_train]
+            temp = label_array[0:num_train]
+            train_label_array = np.zeros((4,len(temp)))
+            for i in range(len(temp)):
+                j = int(temp[i])
+                train_label_array[j,i] = 1
+            #train_label_array = label_array[0:num_train]
+            
 
             valid_image_set = image_batch[num_train:num_train+num_valid]
-            valid_label_array = label_array[num_train:num_train+num_valid]
+            temp = label_array[num_train:num_train+num_valid]
+            valid_label_array = np.zeros((4,len(temp)))
+            for i in range(len(temp)):
+                j = int(temp[i])
+                valid_label_array[j,i] = 1
+            #valid_label_array = label_array[num_train:num_train+num_valid]
 
-            test_image_set = image_batch[num_valid:num_train+num_valid+num_test]
-            test_label_array = label_array[num_valid:num_train+num_valid+num_test]
+            test_image_set = image_batch[num_train+num_valid:num_train+num_valid+num_test]
+            temp = label_array[num_train+num_valid:num_train+num_valid+num_test]
+            test_label_array = np.zeros((4, len(temp)))
+            for i in range(len(temp)):
+                j = int(temp[i])
+                test_label_array[j,i] = 1
+            #test_label_array = label_array[num_valid:num_train+num_valid+num_test]
 
-            # ((traing images, label), (valid images, labels), (test images, labels) )
+            # ((traing_images, label), (valid_images, labels), (test_images, labels) )
             return ((train_image_set, train_label_array), (valid_image_set, valid_label_array), (test_image_set, test_label_array))
             
         return image_batch
@@ -121,6 +137,8 @@ class Generator:
         image = canvas.copy()
         # finding radius
         radius = min(width//2, height//2)
+        if min(width,height) == 10:
+            radius -= 1
         # finding center
         center_x = start_x + width//2
         center_y = start_y + height//2
@@ -189,12 +207,24 @@ class Generator:
 
 if __name__ == "__main__":
     g = Generator()
-    i_set = g.generate(number=100, size=50, split=(0.7, 0.2, 0.1), noise=0.05, object_height_range=(30,50), object_width_range=(30,50))
+    i_set = g.generate(number=100, size=20, split=(0.7, 0.2, 0.1), noise=0.05, object_height_range=(10,20), object_width_range=(10,20), flattend=False)
+    print(i_set[0][0][0])
     traning_set = i_set[0][0]
     traning_labels = i_set[0][1]
+    #print(traning_set[0])
+    #print(traning_labels[0])
+
+    #plt.imshow(i_set[0][0][0])
+    #plt.show()
+
+
+    
+
+
 
     #code to show multiple images
-    
+    """
+    """
     fig = plt.figure(figsize=(8, 8))
     for i in range(len(traning_set)):
         img = traning_set[i]
