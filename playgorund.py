@@ -14,7 +14,7 @@ def show_images():
     generates and shows all pictures in the training set
     """
     g = Generator()
-    i_set = g.generate(number=100, size=40, split=(0.7, 0.2, 0.1), noise=0.01, object_height_range=(20,39), object_width_range=(20,39), centerd=False, flattend=False)
+    i_set = g.generate(number=100, size=40, split=(0.7, 0.2, 0.1), noise=0.01, object_height_range=(20,39), object_width_range=(20,39), centerd=True, flattend=False)
     traning_set = i_set[0][0]
     fig = plt.figure(figsize=(8, 8))
     for i in range(len(traning_set)):
@@ -26,9 +26,9 @@ def show_images():
 
 
 
-def run_network():
-    cd = ConfigData()
-    cn = ConfigNetwork()
+def run_network(file_path):
+    cd = ConfigData(file_path)
+    cn = ConfigNetwork(file_path)
 
     nn = cn.config_neural_network()
     data = cd.generate_data()
@@ -45,6 +45,7 @@ def run_network():
 
     nn.train(input=x_train, target=y_train, epochs=100, batch=20, valid_input=x_valid, valid_target=y_valid, test_input=x_test, test_target=y_test)
 
+    """
     pred = nn.forward_pass(x_test)
     print(pred[:,0])
     print(y_test[:,0])
@@ -62,6 +63,7 @@ def run_network():
     print(nn.loss_graph[0])
     print("training set end:")
     print(nn.loss_graph[-1])
+    """
 
 
     # plotting graph
@@ -71,6 +73,4 @@ def run_network():
 
 if __name__ == "__main__":
     #show_images()
-    run_network()
-
-    #double check the verbose flagg prints
+    run_network("model_config.ini")

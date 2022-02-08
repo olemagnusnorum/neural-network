@@ -4,9 +4,9 @@ import json
 
 class ModelParser:
 
-    def __init__(self):
+    def __init__(self, file_path):
         self.parser = ConfigParser()
-        self.parser.read("model_config2.ini")
+        self.parser.read(file_path)
 
     def get_globals(self):
         globals_values = self.parser.options("globals")

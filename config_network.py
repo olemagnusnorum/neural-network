@@ -6,8 +6,8 @@ import numpy as np
 
 class ConfigNetwork:
     
-    def __init__(self):
-        self.modul_parser = ModelParser()
+    def __init__(self, file_path):
+        self.modul_parser = ModelParser(file_path)
         self.neural_network = NeuralNetwork()
         self.input_size = None
         # activation functions and their derivatives

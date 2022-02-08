@@ -19,7 +19,6 @@ class Sigmoid(Function):
     """
 
     def apply(x):
-        #print(x)
         return 1/(1+np.e**(-x))
 
     def derivative(x):

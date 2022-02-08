@@ -8,9 +8,9 @@ from generator import Generator
 
 class ConfigData:
 
-    def __init__(self) -> None:
+    def __init__(self, file_path) -> None:
         self.data = None
-        self.model_parser = ModelParser()
+        self.model_parser = ModelParser(file_path)
         self.generator = Generator()
     
     def generate_data(self):

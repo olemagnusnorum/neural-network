@@ -1,5 +1,4 @@
 import math
-from turtle import back
 from activation import MSE, CrossEntropy, Linear, Relu, Sigmoid, SoftMax
 from layer import Layer, SoftMaxLayer
 from config_reader import ModelParser
@@ -14,13 +13,13 @@ class NeuralNetwork:
     def __init__(self, loss_function=(MSE.apply, MSE.derivative), wreg=0, wrt="", verbose=False):
         self.hidden_layers = []
         self.softmax_layer = None
-        self.loss_function = loss_function[0] # needs to be modular not hard coded
-        self.derivate_loss_function = loss_function[1] # make this modular
+        self.loss_function = loss_function[0] 
+        self.derivate_loss_function = loss_function[1]
         
         self.verbose = verbose
 
-        self.wreg = 0
-        self.wrt = ""
+        self.wreg = wreg
+        self.wrt = wrt
         
         self.loss_graph = []
         self.batch_graph = []
@@ -29,9 +28,6 @@ class NeuralNetwork:
         self.valid_batch_graph = []
 
     
-
-    def config_data(self):
-        pass
 
     def set_wreg(self, value):
         self.wreg = value
@@ -141,10 +137,6 @@ class NeuralNetwork:
         J_l_output = self.derivate_loss_function(z, t)
         return J_l_output
 
-    def get_L2_regulaizer_sum(self):
-        for layer in self.hidden_layers:
-            pass
-
 
     def train(self, input, target, epochs, batch=1, valid_input=[], valid_target=[], test_input=[], test_target=[]):
         """
@@ -157,6 +149,16 @@ class NeuralNetwork:
             batch_size (int): size of the batch used to calculate gradients
         """
         # for graphing
+        if self.verbose:
+            print("Network inputs:")
+            print(input)
+            print("Network outputs:")
+            pred = self.forward_pass(input)
+            print(pred)
+            print("Network targets:")
+            print(target)
+            print("Network loss:")
+            print(self.loss_function(pred, target).mean())
         step = 0
         # number of batches
         number = math.ceil(input.shape[1]/batch)
@@ -168,12 +170,12 @@ class NeuralNetwork:
             # going through all batches
             for i in range(number):
                 step += 1
-                input = input_batch[i]
-                target = target_batch[i]
+                i_input = input_batch[i]
+                i_target = target_batch[i]
                 # prediction for the case
-                pred = self.forward_pass(input)
+                pred = self.forward_pass(i_input)
                 # getting gradients for the weights and biases from each case and layer
-                deltas_w, deltas_b = self.backward_pass(pred, target)
+                deltas_w, deltas_b = self.backward_pass(pred, i_target)
                 
                 # getting the average gradient of weights for each layer
                 mean_batch_delta_w = []
@@ -188,19 +190,20 @@ class NeuralNetwork:
                 # updating the weight and biases
                 self.update_weights(mean_batch_delta_w)
                 self.update_biases(mean_batch_delta_b)
-
-                self.loss_graph.append(self.loss_function(pred, target).mean())
+                # adding to the loss graph 
+                self.loss_graph.append(self.loss_function(pred, i_target).mean())
                 self.batch_graph.append(step)
-
+                """
                 if self.verbose:
                     print("Network inputs:")
-                    print(input)
+                    print(i_input)
                     print("Network outputs:")
                     print(pred)
                     print("Network targets:")
-                    print(target)
+                    print(i_target)
                     print("Network loss:")
-                    print(self.loss_function(pred, target).mean())
+                    print(self.loss_function(pred, i_target).mean())
+                """
 
             # run forward pass on valid set and save the result
             if len(valid_input) > 0:
@@ -212,6 +215,17 @@ class NeuralNetwork:
             test_pred = self.forward_pass(test_input)
             print("Test set loss:")
             print(self.loss_function(test_pred, test_target).mean())
+        # print verbose after train
+        if self.verbose:
+            print("Network inputs:")
+            print(input)
+            print("Network outputs:")
+            pred = self.forward_pass(input)
+            print(pred)
+            print("Network targets:")
+            print(target)
+            print("Network loss:")
+            print(self.loss_function(pred, target).mean())
     
     def predict(self, input):
         """
@@ -235,7 +249,7 @@ class NeuralNetwork:
             deltas_w (list): list of gradients, the last layer first
         """
         for i in range(len(deltas_w)):
-            self.hidden_layers[-i-1].W_T = self.hidden_layers[-i-1].W_T -self.hidden_layers[-i-1].lrate * deltas_w[i].T #+ (0.001 * self.hidden_layers[-i-1].W_T) # regulazation
+            self.hidden_layers[-i-1].W_T = self.hidden_layers[-i-1].W_T -self.hidden_layers[-i-1].lrate * deltas_w[i].T
 
             
     def update_biases(self, deltas_b):
@@ -299,8 +313,8 @@ if __name__ == "__main__":
     
     x[0,0] = 0
     x[1,0] = 0
-    y[0,0] = 0 # sansynlighet for 1er
-    y[1,0] = 1 # sansynlighet for 0er
+    y[0,0] = 0 
+    y[1,0] = 1 
 
     
 
@@ -322,4 +336,4 @@ if __name__ == "__main__":
     nn.train(x,y, 20000)
 
     print(nn.forward_pass(x))
-    # tror softmax funker men får bare 0.72 prosent sikkerhet ikke 0.9
+    
