@@ -193,17 +193,7 @@ class NeuralNetwork:
                 # adding to the loss graph 
                 self.loss_graph.append(self.loss_function(pred, i_target).mean())
                 self.batch_graph.append(step)
-                """
-                if self.verbose:
-                    print("Network inputs:")
-                    print(i_input)
-                    print("Network outputs:")
-                    print(pred)
-                    print("Network targets:")
-                    print(i_target)
-                    print("Network loss:")
-                    print(self.loss_function(pred, i_target).mean())
-                """
+                
 
             # run forward pass on valid set and save the result
             if len(valid_input) > 0:
@@ -213,6 +203,8 @@ class NeuralNetwork:
         # run forward pass on test set and save the result  
         if len(test_input) > 0:
             test_pred = self.forward_pass(test_input)
+            print(test_pred[0:5].T)
+            print(test_target[0:5].T)
             print("Test set loss:")
             print(self.loss_function(test_pred, test_target).mean())
         # print verbose after train
@@ -267,43 +259,11 @@ class NeuralNetwork:
 
 
 if __name__ == "__main__":
-    """
-    nn = NeuralNetwork()
-
-    nn.add_hidden_layer(Layer(2,2, (Sigmoid.apply, Sigmoid.derivative), 1, [-0.5,0.5], [-0.5,0.5]))
-    nn.add_hidden_layer(Layer(1,2, (Sigmoid.apply, Sigmoid.derivative), 1, [-0.5,0.5], [-0.5,0.5]))
-
-    x = np.zeros((2,4))
-    y = np.zeros((1,4))
-    
-    x[0,0] = 0
-    x[1,0] = 0
-    y[0,0] = 0
-
-    
-
-    x[0,1] = 1
-    x[1,1] = 0
-    y[0,1] = 1
-
-    x[0,2] = 0
-    x[1,2] = 1
-    y[0,2] = 1
-
-    x[0,3] = 1
-    x[1,3] = 1
-    y[0,3] = 0
-
-    nn.train(x,y, 10000)
-
-    print(nn.forward_pass(x))
-
-    """
-    #testing softmax
+    #testing softmax by training the NN to learn the XOR opperation
     nn = NeuralNetwork(loss_function=(CrossEntropy.apply, CrossEntropy.derivative))
 
-    nn.add_hidden_layer(Layer(2,2, (Sigmoid.apply, Sigmoid.derivative), 0.75, [-0.5,0.5], [-0.5,0.5]))
-    nn.add_hidden_layer(Layer(2,2, (Sigmoid.apply, Sigmoid.derivative), 0.75, [-0.5,0.5], [-0.5,0.5]))
+    nn.add_hidden_layer(Layer(2,2, (Sigmoid.apply, Sigmoid.derivative), 0.1, [-0.5,0.5], [-0.5,0.5]))
+    nn.add_hidden_layer(Layer(2,2, (Sigmoid.apply, Sigmoid.derivative), 0.1, [-0.5,0.5], [-0.5,0.5]))
     nn.set_softmax_layer(SoftMaxLayer())
 
 

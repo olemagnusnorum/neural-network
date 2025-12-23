@@ -1,7 +1,7 @@
 Under the [globals] tag are variables that are for the network as a hole.
 Here is the globals variable that is a dictionary containing the the variables.
     'loss', 'lrate', 'wreg', 'wrt', 'verbose' and can contain 'wr' and 'br'.
-    'loss' is the loss function of the network and can be 'mse' of 'cross_entropy'.
+    'loss' is the loss function of the network and can be 'mse' or 'cross_entropy'.
     'lrate' default learning rate and is a number.
     'wr' is a list [,] of the default range for the weight initialization for the layer.
     'br' is a list [,] of the default range for the bias initialization for the layer.

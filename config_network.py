@@ -102,6 +102,7 @@ class ConfigNetwork:
 
 
 if __name__ == "__main__":
+    """
     cn = ConfigNetwork()
     nn = cn.config_neural_network()
 
@@ -129,6 +130,6 @@ if __name__ == "__main__":
     nn.train(x,y, 20000)
 
     print(nn.forward_pass(x))
-    
+    """
     
 

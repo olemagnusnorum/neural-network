@@ -19,5 +19,3 @@ config["layers"] = {
 
 with open("./model_config.txt", "w") as f:
     config.write(f)
-
-# MULIGENS BRUKE YAML FOR NESTEDE DICTIONARIES

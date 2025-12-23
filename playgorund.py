@@ -45,32 +45,12 @@ def run_network(file_path):
 
     nn.train(input=x_train, target=y_train, epochs=100, batch=20, valid_input=x_valid, valid_target=y_valid, test_input=x_test, test_target=y_test)
 
-    """
-    pred = nn.forward_pass(x_test)
-    print(pred[:,0])
-    print(y_test[:,0])
-
-    print(pred[:,1])
-    print(y_test[:,1])
-
-    print(pred[:,2])
-    print(y_test[:,2])
-
-    print(pred[:,3])
-    print(y_test[:,3])
-
-    print("traing set start:")
-    print(nn.loss_graph[0])
-    print("training set end:")
-    print(nn.loss_graph[-1])
-    """
-
-
     # plotting graph
     plt.plot(nn.batch_graph, nn.loss_graph)
     plt.plot(nn.valid_batch_graph, nn.valid_loss_graph)
+    plt.savefig("training.png")
     plt.show()
 
 if __name__ == "__main__":
     #show_images()
-    run_network("model_config.ini")
+    run_network("model_config2.ini")
