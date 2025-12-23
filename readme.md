@@ -1,5 +1,7 @@
 # A simple neural network built with numpy
 
+Creating this neural network was part of an exercise for the corse: Deep Learning (IT3030) at NTNU
+
 The logic and the math for the neural network lies in network.py
 
 The neural network model is created through a model_config where number of layers, activation function, learning rate and loss function is configured
